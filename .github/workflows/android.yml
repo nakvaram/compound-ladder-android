@@ -1,0 +1,64 @@
+name: Build APK & Publish Release
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: apk-release
+  cancel-in-progress: false
+
+jobs:
+  build-apk:
+    name: Build debug APK and publish
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle caching
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build debug APK
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: Prepare APK
+        run: cp app/build/outputs/apk/debug/app-debug.apk CompoundLadder-debug.apk
+
+      - name: Move v1.0 tag to latest commit
+        run: |
+          git tag -f v1.0
+          git push -f origin v1.0
+
+      - name: Publish APK to GitHub Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0
+          name: "سود مرکب — نسخه ۱.۰"
+          body: |
+            اپلیکیشن اندرویدی ماشین‌حساب «سود مرکب»
+
+            ## دانلود
+            فایل `CompoundLadder-debug.apk` را از بخش **Assets** پایین دانلود کنید.
+
+            ## نصب
+            1. فایل APK را روی گوشی باز کنید
+            2. در صورت نیاز، «نصب از منابع ناشناس» (Install unknown apps) را فعال کنید
+            3. برنامه «سود مرکب» را اجرا کنید
+
+            حداقل نسخه اندروید: 7.0 (API 24)
+          files: CompoundLadder-debug.apk
+          fail_on_unmatched_files: true

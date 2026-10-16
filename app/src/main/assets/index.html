@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>محاسبه‌گر سود مرکب</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="سود مرکب">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0B0E14">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0B0E14;
+    --panel:rgba(18,22,31,0.75);
+    --panel-solid:#12161F;
+    --line:#232B3A;
+    --line-soft:#1B212C;
+    --text:#E7ECF3;
+    --muted:#7E889B;
+    --muted-2:#586170;
+    --accent:#D4A72C;
+    --accent-dim:#6b5a22;
+    --teal:#3FC7B4;
+    --teal-dim:#173430;
+    --green:#3ECF7A;
+    --green-dim:#1a4a30;
+    --purple:#A78BFA;
+    --purple-dim:#2d2456;
+    --error:#EF4444;
+    --shadow:0 8px 32px rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.3);
+    --glass-blur:blur(20px) saturate(1.3);
+    --glow:transparent;
+  }
+  [data-theme="light"]{
+    --bg:#F4F2ED;
+    --panel:rgba(255,255,255,0.8);
+    --panel-solid:#FFFFFF;
+    --line:#DDD8D0;
+    --line-soft:#EAE6E0;
+    --text:#1A1A1A;
+    --muted:#6B6560;
+    --muted-2:#9B9590;
+    --accent:#B8860B;
+    --accent-dim:#F5E6C8;
+    --teal:#0D9488;
+    --teal-dim:#CCFBF1;
+    --green:#16A34A;
+    --green-dim:#DCFCE7;
+    --purple:#7C3AED;
+    --purple-dim:#EDE9FE;
+    --error:#DC2626;
+    --shadow:0 8px 32px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.04);
+  }
+  [data-theme="cyber"]{
+    --bg:#07070F;
+    --panel:rgba(13,15,27,0.8);
+    --panel-solid:#0D0F1B;
+    --line:#2B2F4A;
+    --line-soft:#1A1D33;
+    --text:#E0E6FF;
+    --muted:#8A93B8;
+    --muted-2:#5A628C;
+    --accent:#FF2A6D;
+    --accent-dim:#4A1024;
+    --teal:#05D9E8;
+    --teal-dim:#063A3E;
+    --green:#01FFC3;
+    --green-dim:#004A39;
+    --purple:#BF5AF2;
+    --purple-dim:#2A1040;
+    --error:#FF3860;
+    --shadow:0 8px 32px rgba(255,42,109,0.1), 0 2px 8px rgba(5,217,232,0.1);
+    --glow:rgba(255,42,109,0.4);
+  }
+
+  *{box-sizing:border-box; min-width:0;}
+  html,body{margin:0;padding:0;}
+
+  body{
+    background-color:var(--bg);
+    background-image:radial-gradient(1200px 600px at 50% -10%, rgba(255,255,255,0.03) 0%, transparent 60%);
+    color:var(--text);
+    font-family:'Vazirmatn', sans-serif;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    padding:40px 14px 72px;
+    transition: background-color 0.4s ease, color 0.3s ease;
+    position:relative;
+    overflow-x:hidden;
+  }
+  [data-theme="cyber"] body{
+    background-image:
+      linear-gradient(rgba(5,217,232,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(5,217,232,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  body::before, body::after{
+    content:''; position:fixed; border-radius:50%;
+    filter:blur(90px); z-index:-1; opacity:0.12; pointer-events:none;
+    animation: floatOrb 12s ease-in-out infinite alternate;
+  }
+  body::before{ width:45vw; height:45vw; max-width:400px; max-height:400px; background:var(--accent); top:-10%; right:-10%; }
+  body::after{ width:35vw; height:35vw; max-width:300px; max-height:300px; background:var(--teal); bottom:-5%; left:-5%; animation-delay:-6s; }
+  [data-theme="cyber"] body::before, [data-theme="cyber"] body::after{ opacity:0.25; }
+
+  @keyframes floatOrb{
+    from{ transform:translate(0,0) scale(1); }
+    to{ transform:translate(-50px, 60px) scale(1.15); }
+  }
+
+  .mono{font-family:'JetBrains Mono', monospace;}
+  .ltr{direction:ltr; unicode-bidi:isolate;}
+
+  .card{ width:100%; max-width:680px; }
+
+  @keyframes fadeUp{
+    from{ opacity:0; transform:translateY(24px); }
+    to{ opacity:1; transform:translateY(0); }
+  }
+  .card > *{ animation:fadeUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) both; }
+  .card > *:nth-child(1){ animation-delay:0.05s; }
+  .card > *:nth-child(2){ animation-delay:0.12s; }
+  .card > *:nth-child(3){ animation-delay:0.19s; }
+  .card > *:nth-child(4){ animation-delay:0.3s; }
+
+  .header-row{ display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:4px; }
+  .eyebrow{
+    font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:.22em;
+    color:var(--accent); text-transform:uppercase; margin-bottom:10px;
+    direction:ltr; text-align:right;
+  }
+  [data-theme="cyber"] .eyebrow{ text-shadow:0 0 10px var(--glow); }
+
+  h1{ font-size:24px; font-weight:700; margin:0 0 4px; letter-spacing:-.01em; }
+  .sub{ color:var(--muted); font-size:13px; margin:0 0 22px; line-height:1.7; }
+
+  .theme-toggle{
+    flex:0 0 auto; width:40px;height:40px; border-radius:12px;
+    border:1px solid var(--line); background:var(--panel-solid);
+    color:var(--muted); font-size:18px; cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    transition:all .25s cubic-bezier(0.34, 1.56, 0.64, 1); margin-top:2px;
+  }
+  .theme-toggle:hover{ border-color:var(--accent); color:var(--accent); transform:scale(1.1) rotate(15deg); }
+  .theme-toggle:active{ transform:scale(0.85); }
+
+  .panel{
+    background:var(--panel);
+    backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur);
+    border:1px solid var(--line); border-radius:18px; padding:24px;
+    overflow:visible; box-shadow:var(--shadow), inset 0 1px 0 rgba(255,255,255,0.05);
+    transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  }
+  [data-theme="cyber"] .panel{
+    border-color:rgba(5,217,232,0.35);
+    box-shadow:0 0 25px rgba(5,217,232,0.08), inset 0 0 30px rgba(255,42,109,0.04);
+  }
+
+  .segmented{
+    position:relative; display:grid; grid-template-columns:1fr 1fr;
+    background:var(--line-soft); border-radius:12px; padding:4px;
+    margin-bottom:22px; border:1px solid var(--line);
+  }
+  .segmented-thumb{
+    position:absolute; top:4px; bottom:4px; right:4px;
+    width:calc(50% - 4px); background:var(--panel-solid); border-radius:9px;
+    box-shadow:0 2px 10px rgba(0,0,0,0.25); border:1px solid var(--line);
+    transition:transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); z-index:0;
+  }
+  .segmented.reverse .segmented-thumb{ transform:translateX(-100%); }
+  [data-theme="cyber"] .segmented-thumb{ border-color:rgba(5,217,232,0.4); box-shadow:0 0 12px rgba(5,217,232,0.15); }
+  .seg-btn{
+    position:relative; z-index:1; background:none; border:none;
+    color:var(--muted); font-family:'Vazirmatn', sans-serif; font-size:12px;
+    font-weight:600; padding:9px 4px; cursor:pointer; transition:color 0.3s;
+    border-radius:9px; user-select:none;
+  }
+  .seg-btn.active{ color:var(--text); }
+  .seg-btn:hover:not(.active){ opacity:0.7; }
+
+  .inputs{ display:flex; flex-direction:column; gap:18px; }
+  .pair-row{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  @media (max-width:480px){ .pair-row{ grid-template-columns:1fr; } }
+
+  .field-anim {
+    transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+    max-height: 140px; opacity: 1; overflow: hidden;
+  }
+  .field-anim.hidden-field { max-height: 0; opacity: 0; pointer-events: none; }
+
+  .field label{ display:flex; align-items:center; gap:6px; font-size:11px; color:var(--muted); margin-bottom:8px; }
+
+  .info-tip{ position:relative; display:inline-flex; cursor:help; }
+  .info-tip svg{ opacity:0.5; transition:opacity .15s; }
+  .info-tip:hover svg{ opacity:1; }
+  .info-tip::after{
+    content:attr(data-tip); position:absolute; bottom:calc(100% + 8px);
+    right:50%; transform:translateX(50%) scale(0.92);
+    background:var(--panel-solid); border:1px solid var(--line); color:var(--text);
+    font-size:11px; line-height:1.6; padding:8px 12px; border-radius:8px; width:220px;
+    text-align:center; opacity:0; pointer-events:none;
+    transition:all .25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow:0 4px 16px rgba(0,0,0,0.3); z-index:20;
+  }
+  .info-tip:hover::after{ opacity:1; transform:translateX(50%) scale(1); }
+
+  .inputwrap{
+    direction:ltr; display:flex; align-items:center; gap:6px;
+    border-bottom:1.5px solid var(--line); padding-bottom:8px;
+    transition:border-color .2s ease;
+  }
+  .inputwrap:focus-within{ border-color:var(--accent); }
+  .inputwrap.rate-wrap:focus-within{ border-color:var(--green); }
+  .inputwrap.target-wrap:focus-within{ border-color:var(--teal); }
+  .inputwrap.step-profit-wrap:focus-within{ border-color:var(--purple); }
+
+  .stepbtn{
+    position:relative; overflow:hidden;
+    flex:0 0 auto; width:28px; height:28px; border-radius:8px;
+    border:1px solid var(--line); background:var(--panel-solid); color:var(--muted);
+    font-family:'JetBrains Mono', monospace; font-size:15px; line-height:1;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; user-select:none; transition:all .15s ease;
+  }
+  .stepbtn::after{
+    content:''; position:absolute; inset:0;
+    background:radial-gradient(circle, rgba(255,255,255,0.4) 10%, transparent 10.01%);
+    transform:scale(10); opacity:0; transition:transform .4s, opacity .8s;
+  }
+  .stepbtn:active::after{ transform:scale(0); opacity:.6; transition:0s; }
+  .stepbtn:hover{ color:var(--text); border-color:var(--accent); }
+  .stepbtn:active{ background:var(--accent-dim); color:var(--text); transform:scale(0.85); }
+
+  .field input{
+    flex:1 1 auto; width:100%; min-width:0; background:transparent; border:0; outline:0;
+    color:var(--text); font-family:'JetBrains Mono', monospace;
+    font-size:clamp(15px, 4vw, 19px); font-weight:600; text-align:center;
+    transition:color .3s;
+  }
+  #rate{ color:var(--green); }
+  #target{ color:var(--teal); }
+  #stepProfitTarget{ color:var(--purple); }
+  [data-theme="cyber"] #rate{ text-shadow:0 0 8px rgba(1,255,195,0.4); }
+  [data-theme="cyber"] #target{ text-shadow:0 0 8px rgba(5,217,232,0.5); }
+  [data-theme="cyber"] #stepProfitTarget{ text-shadow:0 0 8px rgba(191,90,242,0.5); }
+
+  .unit{ color:var(--muted-2); font-size:13px; font-family:'JetBrains Mono', monospace; flex:0 0 auto; }
+  .unit.green{ color:var(--green); }
+
+  .steplevels{ direction:ltr; display:flex; gap:6px; margin-top:8px; justify-content:center; }
+  .steplevels .stepbtn{ flex:1 1 0; width:auto; font-size:11px; color:var(--green); border-color:var(--green-dim); }
+  .steplevels .stepbtn:hover{ border-color:var(--green); color:var(--text); }
+  .steplevels .stepbtn:active{ background:var(--green-dim); color:var(--text); }
+  .steplevels .stepbtn.step-1{ opacity:.55; }
+  .steplevels .stepbtn.step-3{ opacity:.8; }
+  .steplevels .stepbtn.step-10{ opacity:1; background:var(--green-dim); border-color:var(--green); color:var(--green); font-weight:700; }
+  .steplevels .stepbtn.step-10:hover{ color:var(--text); }
+
+  .reset{ margin-top:18px; display:flex; justify-content:flex-end; }
+  .reset-btn-styled{
+    background: var(--panel-solid); border: 1px solid var(--line); color: var(--text);
+    font-family: 'Vazirmatn', sans-serif; font-size: 12px; font-weight: 500;
+    cursor: pointer; padding: 8px 16px; border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .reset-btn-styled:hover{ border-color: var(--accent); color: var(--accent); transform: translateY(-1px); }
+  .reset-btn-styled:active{ transform: translateY(1px); box-shadow: none; }
+
+  .divider{ height:1px; background:var(--line-soft); margin:24px 0; }
+
+  .result-label{ font-size:12px; color:var(--muted); margin-bottom:6px; }
+  .result-value{
+    font-size:clamp(24px, 8vw, 40px); font-weight:700; color:var(--accent);
+    line-height:1.25; overflow-wrap:anywhere; transition:color .3s;
+  }
+  [data-theme="cyber"] .result-value{ text-shadow:0 0 15px var(--glow); }
+
+  @keyframes resultPop{
+    0%{ transform:scale(0.97) translateY(4px); filter:blur(6px); opacity:0.4; }
+    100%{ transform:scale(1) translateY(0); filter:blur(0); opacity:1; }
+  }
+  .result-value.updating{ animation:resultPop 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
+
+  .result-note{ font-size:11.5px; color:var(--muted-2); margin-top:6px; }
+
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+  .stat-card {
+    background: rgba(255, 255, 255, 0.02); border: 1px solid var(--line-soft);
+    border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column;
+  }
+  .stat-title { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+  .stat-value { font-size: 14px; font-weight: 700; color: var(--text); }
+  .green-text { color: var(--green); }
+
+  .target-note{
+    display:none; margin-top:12px; font-size:12px; color:var(--green);
+    background:rgba(62,207,122,0.08); border:1px solid rgba(62,207,122,0.25);
+    padding:9px 13px; border-radius:10px; animation:fadeUp 0.4s ease;
+  }
+  .target-note.visible{ display:block; }
+
+  .step-profit-note{
+    display:none; margin-top:8px; font-size:12px; color:var(--purple);
+    background:rgba(167,139,250,0.08); border:1px solid rgba(167,139,250,0.25);
+    padding:9px 13px; border-radius:10px; animation:fadeUp 0.4s ease;
+  }
+  .step-profit-note.visible{ display:block; }
+
+  .growth-bar-wrap{ margin-top:16px; position:relative; padding-top:22px; }
+  .growth-bar{ height:6px; background:var(--line-soft); border-radius:4px; position:relative; overflow:visible; }
+  .growth-bar-fill{
+    height:100%; border-radius:4px; position:relative; min-width:4px;
+    background:linear-gradient(90deg, var(--accent-dim), var(--accent));
+    transition:width .6s cubic-bezier(0.22,1,0.36,1);
+  }
+  .growth-bar-fill::after{
+    content:''; position:absolute; right:-4px; top:-4px;
+    width:14px; height:14px; border-radius:50%; background:var(--accent);
+    box-shadow:0 0 12px var(--accent);
+  }
+  .growth-bar-label{
+    position:absolute; top:0; right:0; font-size:11px;
+    font-family:'JetBrains Mono', monospace; color:var(--accent); font-weight:600;
+  }
+
+  .error-msg{
+    display:none; background:rgba(239,68,68,0.08); border:1px solid var(--error);
+    color:var(--error); font-size:12px; padding:10px 14px; border-radius:10px; margin-top:12px;
+    animation:shake .35s cubic-bezier(.36,.07,.19,.97) both;
+  }
+  .error-msg.visible{ display:block; }
+  @keyframes shake{
+    10%, 90% { transform: translateX(-1px); } 20%, 80% { transform: translateX(2px); }
+    30%, 50%, 70% { transform: translateX(-4px); } 40%, 60% { transform: translateX(4px); }
+  }
+
+  /* ─── نردبان: ۳ ستونه، تراز چپ ─── */
+  .ladder-section{ margin-top:28px; }
+
+  .ladder-header{
+    display:grid;
+    grid-template-columns: minmax(60px, auto) minmax(0, 1fr) minmax(0, 1fr);
+    column-gap:10px;
+    direction:ltr;
+    padding:0 6px 8px;
+    border-bottom:1.5px solid var(--line);
+    margin-bottom:4px;
+  }
+  .ladder-header span{
+    font-size:10.5px;
+    font-weight:600;
+    color:var(--muted);
+    text-align:left;
+    font-family:'Vazirmatn', sans-serif;
+  }
+
+  .ladder-grid{
+    display:grid;
+    grid-template-columns: minmax(60px, auto) minmax(0, 1fr) minmax(0, 1fr);
+    column-gap:10px;
+    direction:ltr;
+    width:100%;
+  }
+  @media (max-width:420px){
+    .ladder-grid, .ladder-header{ column-gap:6px; }
+  }
+
+  .cell{
+    padding:9px 6px;
+    border-bottom:1px solid var(--line-soft);
+    display:flex;
+    align-items:center;
+    justify-content:flex-start;
+    text-align:left;
+    border-radius:6px;
+    transition:background .15s ease;
+    animation:fadeSlideIn .3s ease both;
+    overflow:hidden;
+  }
+  .cell:hover{ background:rgba(255,255,255,0.03); }
+  [data-theme="light"] .cell:hover{ background:rgba(0,0,0,0.03); }
+  .cell.lastrow{ border-bottom:0; }
+
+  @keyframes fadeSlideIn{ from{ opacity:0; transform:translateY(8px); } to{ opacity:1; transform:translateY(0); } }
+  .ladder-grid .cell:nth-child(3n+1){ animation-delay:.02s; }
+  .ladder-grid .cell:nth-child(3n+2){ animation-delay:.05s; }
+  .ladder-grid .cell:nth-child(3n+3){ animation-delay:.08s; }
+
+  .cell-ratio{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    color:var(--teal);
+    white-space:nowrap;
+    gap:4px;
+  }
+  .cell-ratio .ratio-k{
+    background:var(--teal-dim);
+    border-radius:5px;
+    padding:2px 6px;
+    font-weight:700;
+    font-size:11px;
+  }
+  .cell-ratio .ratio-k.base{
+    color:var(--accent);
+    background:var(--accent-dim);
+  }
+  .cell-ratio .ratio-eq{
+    color:var(--muted-2);
+    font-size:11px;
+  }
+  .cell-ratio .ratio-steps{
+    color:var(--muted);
+    font-size:11.5px;
+  }
+
+  .cell-amount{
+    font-family:'JetBrains Mono', monospace;
+    font-size:clamp(10.5px, 3vw, 13px);
+    font-weight:600;
+    color:var(--text);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .cell-amount.base{ color:var(--accent); }
+
+  .cell-profit{
+    font-family:'JetBrains Mono', monospace;
+    font-size:clamp(10.5px, 3vw, 12.5px);
+    color:var(--green);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+
+  /* هایلایت مبلغ هدف */
+  @keyframes targetPulse{
+    0%, 100%{ box-shadow:0 0 0 0 rgba(62,207,122,0.35); }
+    50%{ box-shadow:0 0 0 4px rgba(62,207,122,0); }
+  }
+  .cell.target-hit{
+    background:rgba(62,207,122,0.07);
+    border-bottom-color:rgba(62,207,122,0.35);
+  }
+  .cell.target-hit .cell-amount{
+    color:var(--green); font-weight:700;
+    text-shadow:0 0 10px rgba(62,207,122,0.25);
+  }
+  .cell.target-hit .ratio-k{
+    color:var(--green); background:rgba(62,207,122,0.12);
+    animation:targetPulse 2.5s infinite;
+  }
+
+  /* هایلایت سود مرحله‌ای */
+  @keyframes profitPulse{
+    0%, 100%{ box-shadow:0 0 0 0 rgba(167,139,250,0.35); }
+    50%{ box-shadow:0 0 0 4px rgba(167,139,250,0); }
+  }
+  .cell.profit-hit{
+    background:rgba(167,139,250,0.07);
+    border-bottom-color:rgba(167,139,250,0.35);
+  }
+  .cell.profit-hit .cell-profit{
+    color:var(--purple); font-weight:700;
+    text-shadow:0 0 10px rgba(167,139,250,0.3);
+    background:rgba(167,139,250,0.1);
+    border-radius:5px;
+    padding:2px 6px;
+    animation:profitPulse 2.5s infinite;
+  }
+
+  .options-row{ display:flex; align-items:center; justify-content:space-between; margin-top:20px; padding-top:16px; border-top:1px solid var(--line-soft); }
+  .toggle-label{ font-size:11px; color:var(--muted); display:flex; align-items:center; gap:10px; cursor:pointer; user-select:none; }
+  .toggle-switch{ width:38px; height:22px; border-radius:12px; background:var(--line); position:relative; transition:background .25s ease; cursor:pointer; }
+  .toggle-switch::after{
+    content:''; position:absolute; top:3px; right:3px; width:16px; height:16px; border-radius:50%;
+    background:var(--muted-2); transition:all .3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .toggle-switch.active{ background:var(--accent-dim); }
+  .toggle-switch.active::after{ right:19px; background:var(--accent); box-shadow:0 0 8px var(--glow); }
+
+  footer{ text-align:center; color:var(--muted-2); font-size:11px; margin-top:28px; font-family:'JetBrains Mono', monospace; letter-spacing:.04em; }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="header-row">
+    <div>
+      <div class="eyebrow">COMPOUND LADDER</div>
+      <h1>محاسبه‌گر سود مرکب</h1>
+    </div>
+    <button class="theme-toggle" id="themeToggle" aria-label="تغییر تم رنگی" title="تغییر تم">🌙</button>
+  </div>
+  <p class="sub">مبلغ اولیه، درصد سود هر مرحله و تعداد مراحل پایه را وارد کن — با تایپ یا دکمه‌های +/− مقدارها را تغییر بده.</p>
+
+  <div class="panel">
+
+    <div class="segmented" id="modeSegment" role="tablist" aria-label="انتخاب حالت محاسبه">
+      <div class="segmented-thumb"></div>
+      <button class="seg-btn active" data-mode="normal" role="tab" aria-selected="true">💰 پیش‌بینی سود</button>
+      <button class="seg-btn" data-mode="reverse" role="tab" aria-selected="false">🎯 هدف‌گذاری معکوس</button>
+    </div>
+
+    <div class="inputs">
+
+      <div class="field">
+        <label>
+          مبلغ هدف
+          <span class="info-tip" data-tip="مبلغی که می‌خواهید به آن برسید. مرحله رسیدن به آن روی نردبان با رنگ سبز مشخص می‌شود.">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+          </span>
+        </label>
+        <div class="inputwrap target-wrap">
+          <button type="button" class="stepbtn" data-target="target" data-dir="-1" aria-label="کاهش هدف">−</button>
+          <input id="target" type="text" value="1,000,000" inputmode="numeric" autocomplete="off" spellcheck="false" aria-label="مبلغ هدف">
+          <button type="button" class="stepbtn" data-target="target" data-dir="1" aria-label="افزایش هدف">+</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>
+          سود مرحله‌ای
+          <span class="info-tip" data-tip="مبلغ سود مورد نظر در هر مرحله. در کدام مرحله سود آن مرحله (مبلغ × درصد سود) به این عدد می‌رسد؟ با رنگ بنفش مشخص می‌شود.">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+          </span>
+        </label>
+        <div class="inputwrap step-profit-wrap">
+          <button type="button" class="stepbtn" data-target="stepProfitTarget" data-dir="-1" aria-label="کاهش سود مرحله‌ای">−</button>
+          <input id="stepProfitTarget" type="text" value="1,000" inputmode="numeric" autocomplete="off" spellcheck="false" aria-label="سود مرحله‌ای هدف">
+          <button type="button" class="stepbtn" data-target="stepProfitTarget" data-dir="1" aria-label="افزایش سود مرحله‌ای">+</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>
+          مبلغ اولیه
+          <span class="info-tip" data-tip="مبلغی که در ابتدا سرمایه‌گذاری می‌کنید.">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+          </span>
+        </label>
+        <div class="inputwrap">
+          <button type="button" class="stepbtn" data-target="principal" data-dir="-1" aria-label="کاهش مبلغ">−</button>
+          <input id="principal" type="text" value="1,000" inputmode="numeric" autocomplete="off" spellcheck="false" aria-label="مبلغ اولیه سرمایه‌گذاری">
+          <button type="button" class="stepbtn" data-target="principal" data-dir="1" aria-label="افزایش مبلغ">+</button>
+        </div>
+      </div>
+
+      <div class="pair-row">
+        <div class="field">
+          <label>
+            درصد سود هر مرحله
+            <span class="info-tip" data-tip="درصد رشد در هر مرحله. مثلاً ۳٪ یعنی هر مرحله مبلغ ۱.۰۳ برابر می‌شود.">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+            </span>
+          </label>
+          <div class="inputwrap rate-wrap">
+            <input id="rate" type="text" value="3" inputmode="decimal" autocomplete="off" spellcheck="false" aria-label="درصد سود هر مرحله">
+            <span class="unit green">%</span>
+          </div>
+          <div class="steplevels">
+            <button type="button" class="stepbtn step-10" data-target="rate" data-dir="-1" data-step="10">−10</button>
+            <button type="button" class="stepbtn step-3" data-target="rate" data-dir="-1" data-step="3">−3</button>
+            <button type="button" class="stepbtn step-1" data-target="rate" data-dir="-1" data-step="1">−1</button>
+            <button type="button" class="stepbtn step-1" data-target="rate" data-dir="1" data-step="1">+1</button>
+            <button type="button" class="stepbtn step-3" data-target="rate" data-dir="1" data-step="3">+3</button>
+            <button type="button" class="stepbtn step-10" data-target="rate" data-dir="1" data-step="10">+10</button>
+          </div>
+        </div>
+
+        <div class="field field-anim" id="stepsFieldWrap">
+          <label>
+            تعداد مراحل پایه
+            <span class="info-tip" data-tip="تعداد مراحل در ردیف پایه (×۱). در حالت معکوس، خودکار محاسبه می‌شود.">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+            </span>
+          </label>
+          <div class="inputwrap">
+            <button type="button" class="stepbtn" data-target="steps" data-dir="-1" aria-label="کاهش مراحل">−</button>
+            <input id="steps" type="text" value="22" inputmode="numeric" autocomplete="off" spellcheck="false" aria-label="تعداد مراحل پایه">
+            <button type="button" class="stepbtn" data-target="steps" data-dir="1" aria-label="افزایش مراحل">+</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="reset">
+      <button id="resetBtn" class="reset-btn-styled">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+        مقادیر پیش‌فرض
+      </button>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="error-msg" id="errorMsg" role="alert"></div>
+
+    <div class="result-label" id="resultLabel">نتیجه پس از ۲۲ مرحله</div>
+    <div class="result-value mono ltr" id="resultValue" aria-live="polite">1,916</div>
+    <div class="result-note" id="resultNote"></div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <span class="stat-title">اصل سرمایه</span>
+        <span class="stat-value mono" id="statPrincipal">1,000</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-title">سود خالص کسب‌شده</span>
+        <span class="stat-value mono green-text" id="statProfit">+916</span>
+      </div>
+    </div>
+
+    <div class="target-note" id="targetNote"></div>
+    <div class="step-profit-note" id="stepProfitNote"></div>
+
+    <div class="growth-bar-wrap">
+      <span class="growth-bar-label" id="growthLabel">+92%</span>
+      <div class="growth-bar">
+        <div class="growth-bar-fill" id="growthFill" style="width:50%"></div>
+      </div>
+    </div>
+
+    <!-- ─── نردبان ۳ ستونه ─── -->
+    <div class="ladder-section">
+      <div class="ladder-header">
+        <span>ضریب</span>
+        <span>مبلغ کل</span>
+        <span>سود هر مرحله</span>
+      </div>
+      <div class="ladder-grid" id="ladder" role="table" aria-label="جدول ضریب‌ها"></div>
+    </div>
+
+    <div class="options-row">
+      <label class="toggle-label">
+        اعداد فارسی
+        <span class="toggle-switch" id="persianToggle" role="switch" aria-checked="false" tabindex="0"></span>
+      </label>
+    </div>
+  </div>
+
+  <footer>P = P₀ × (1 + r)ⁿ</footer>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  const panel = document.querySelector('.panel');
+  const targetEl = document.getElementById('target');
+  const stepProfitTargetEl = document.getElementById('stepProfitTarget');
+  const principalEl = document.getElementById('principal');
+  const rateEl = document.getElementById('rate');
+  const stepsEl = document.getElementById('steps');
+  const resultLabel = document.getElementById('resultLabel');
+  const resultValue = document.getElementById('resultValue');
+  const resultNote = document.getElementById('resultNote');
+  const targetNote = document.getElementById('targetNote');
+  const stepProfitNote = document.getElementById('stepProfitNote');
+  const ladder = document.getElementById('ladder');
+  const resetBtn = document.getElementById('resetBtn');
+  const errorMsg = document.getElementById('errorMsg');
+  const growthFill = document.getElementById('growthFill');
+  const growthLabel = document.getElementById('growthLabel');
+  const themeToggle = document.getElementById('themeToggle');
+  const persianToggle = document.getElementById('persianToggle');
+  const modeSegment = document.getElementById('modeSegment');
+  const segBtns = document.querySelectorAll('.seg-btn');
+  const stepsFieldWrap = document.getElementById('stepsFieldWrap');
+  const statPrincipal = document.getElementById('statPrincipal');
+  const statProfit = document.getElementById('statProfit');
+
+  let usePersianDigits = false;
+  let isReverse = false;
+  let lastResultNum = 0;
+  let rafId = null;
+
+  const MAX_TOTAL_STEPS = 10000;
+  const PERSIAN_DIGITS = ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'];
+
+  const fieldConfig = {
+    target:          { step: 100000, min: 0, decimals: 0 },
+    stepProfitTarget:{ step: 100,    min: 0, decimals: 0 },
+    principal:       { step: 1000,   min: 0, decimals: 0 },
+    rate:            { step: 1,      min: undefined, decimals: 2 },
+    steps:           { step: 1,      min: 1, decimals: 0 }
+  };
+
+  function haptic(ms){
+    if ('vibrate' in navigator) { try { navigator.vibrate(ms); } catch(e) {} }
+  }
+
+  function toPersianDigits(str){
+    if(!usePersianDigits) return str;
+    return String(str).replace(/[0-9]/g, d => PERSIAN_DIGITS[+d]).replace(/,/g, '٬');
+  }
+
+  /* ─── فرمت مخفف برای نردبان ─── */
+  function fmtShort(n){
+    if(!isFinite(n)) return n > 0 ? '∞' : '—';
+    if(n === 0) return toPersianDigits('0');
+    const abs = Math.abs(n);
+    const sign = n < 0 ? '-' : '';
+    let result;
+    if(abs < 10000){
+      result = Math.round(abs).toLocaleString('en-US');
+    } else if(abs < 1e6){
+      const v = abs / 1000;
+      result = (v >= 100 ? Math.round(v).toLocaleString('en-US') : v.toFixed(1).replace(/\.0$/,'')) + 'K';
+    } else if(abs < 1e9){
+      const v = abs / 1e6;
+      result = (v >= 100 ? Math.round(v).toLocaleString('en-US') : v.toFixed(2).replace(/\.?0+$/,'')) + 'M';
+    } else if(abs < 1e12){
+      const v = abs / 1e9;
+      result = (v >= 100 ? Math.round(v).toLocaleString('en-US') : v.toFixed(2).replace(/\.?0+$/,'')) + 'B';
+    } else {
+      const exp = n.toExponential(2);
+      result = exp;
+    }
+    return toPersianDigits(sign + result);
+  }
+
+  /* فرمت کامل برای نتیجه و inputها */
+  function fmtFull(n){
+    if(!isFinite(n)) return n > 0 ? '∞' : '—';
+    return toPersianDigits(Math.round(n).toLocaleString('en-US'));
+  }
+
+  function round(v, decimals){
+    const f = Math.pow(10, decimals);
+    return Math.round(v * f) / f;
+  }
+
+  function getInputVal(el){
+    return parseFloat(String(el.value).replace(/,/g, '')) || 0;
+  }
+
+  function formatForInput(n, decimals){
+    if (decimals === 0) return Math.round(n).toLocaleString('en-US');
+    return String(round(n, decimals));
+  }
+
+  function sanitizeAndFormat(input){
+    const cfg = fieldConfig[input.id];
+    if(!cfg) return;
+    const val = input.value;
+    const cursor = input.selectionStart || 0;
+    const digitsBefore = (val.slice(0, cursor).match(/[0-9]/g) || []).length;
+
+    if (cfg.decimals === 0) {
+      let clean = val.replace(/[^0-9]/g, '').slice(0, 15);
+      if (clean === '') { input.value = ''; return; }
+      const formatted = Number(clean).toLocaleString('en-US');
+      if (formatted !== val) {
+        input.value = formatted;
+        let count = 0, newCursor = formatted.length;
+        if (digitsBefore === 0) newCursor = 0;
+        else {
+          for (let i = 0; i < formatted.length; i++) {
+            if (/[0-9]/.test(formatted[i])) count++;
+            if (count === digitsBefore) { newCursor = i + 1; break; }
+          }
+        }
+        input.setSelectionRange(newCursor, newCursor);
+      }
+    } else {
+      let clean = val.replace(/[^0-9.]/g, '');
+      let parts = clean.split('.');
+      if (parts.length > 2) clean = parts[0] + '.' + parts.slice(1).join('');
+      if (parts[1] && parts[1].length > 2) clean = parts[0] + '.' + parts[1].slice(0, 2);
+      if (clean !== val) {
+        input.value = clean;
+        input.setSelectionRange(Math.min(cursor, clean.length), Math.min(cursor, clean.length));
+      }
+    }
+  }
+
+  function animateValue(el, start, end, duration){
+    duration = duration || 350;
+    el.classList.remove('updating');
+    void el.offsetWidth;
+    el.classList.add('updating');
+    const startTime = performance.now();
+    function tick(now){
+      const progress = Math.min((now - startTime) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      el.textContent = fmtFull(start + (end - start) * eased);
+      if(progress < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+
+  function compute(){
+    const P0 = getInputVal(principalEl);
+    const rPct = getInputVal(rateEl);
+    const r = rPct / 100;
+    const N_input = Math.max(1, Math.round(getInputVal(stepsEl)));
+    const target = getInputVal(targetEl);
+    const stepProfitTarget = getInputVal(stepProfitTargetEl);
+
+    let err = null;
+    if(P0 < 0) err = '⚠️ مبلغ اولیه نمی‌تواند منفی باشد.';
+    else if(target < 0) err = '⚠️ مبلغ هدف نمی‌تواند منفی باشد.';
+    else if(stepProfitTarget < 0) err = '⚠️ سود مرحله‌ای نمی‌تواند منفی باشد.';
+    else if(r <= -100) err = '⚠️ درصد سود نمی‌تواند −۱۰۰٪ یا کمتر باشد.';
+    else if(!isReverse && N_input * 12 > MAX_TOTAL_STEPS) err = '⚠️ حداکثر مراحل مجاز: ' + MAX_TOTAL_STEPS;
+    else if(isReverse && target > P0 && r <= 0) err = '⚠️ با نرخ سود صفر یا منفی هرگز به هدف نمی‌رسید.';
+    else if(isReverse && P0 <= 0 && target > P0) err = '⚠️ برای محاسبه معکوس، مبلغ اولیه باید بزرگتر از صفر باشد.';
+
+    if(err){
+      errorMsg.textContent = err;
+      errorMsg.classList.add('visible');
+      return;
+    }
+    errorMsg.classList.remove('visible');
+
+    let N, displayValue, labelText, noteText, growthPct;
+
+    if(isReverse){
+      let nRequired;
+      if(target <= P0){ nRequired = 0; }
+      else { nRequired = Math.ceil(Math.log(target / P0) / Math.log(1 + r)); }
+
+      if(nRequired > MAX_TOTAL_STEPS){
+        errorMsg.textContent = '⚠️ رسیدن به این هدف بیش از ' + MAX_TOTAL_STEPS + ' مرحله طول می‌کشد.';
+        errorMsg.classList.add('visible');
+        return;
+      }
+
+      N = nRequired > 0 ? nRequired : 1;
+      displayValue = nRequired;
+      labelText = 'تعداد مراحل لازم برای رسیدن به هدف';
+      const finalAmt = P0 * Math.pow(1 + r, N);
+      noteText = nRequired === 0
+        ? '🎉 شما همین حالا به هدف رسیده‌اید!'
+        : 'پس از ' + fmtFull(N) + ' مرحله، سرمایه شما به ' + fmtFull(finalAmt) + ' می‌رسد.';
+      growthPct = P0 > 0 ? ((target / P0) - 1) * 100 : 0;
+      targetNote.classList.remove('visible');
+      stepProfitNote.classList.remove('visible');
+      statPrincipal.textContent = fmtFull(P0);
+      statProfit.textContent = (target - P0 >= 0 ? '+' : '') + fmtFull(target - P0);
+
+    } else {
+      N = N_input;
+      displayValue = P0 * Math.pow(1 + r, N);
+      labelText = 'نتیجه پس از ' + toPersianDigits(String(N)) + ' مرحله';
+      growthPct = P0 !== 0 ? ((displayValue / P0) - 1) * 100 : 0;
+      noteText = 'رشد کل: ' + fmtFull(Math.round(growthPct)) + '٪ نسبت به مبلغ اولیه';
+      statPrincipal.textContent = fmtFull(P0);
+      const profit = displayValue - P0;
+      statProfit.textContent = (profit >= 0 ? '+' : '') + fmtFull(profit);
+
+      if(target > 0 && P0 > 0){
+        if(P0 >= target){
+          targetNote.textContent = '🎉 شما همین حالا به هدف رسیده‌اید!';
+        } else if(r <= 0){
+          targetNote.textContent = '⚠️ با نرخ سود فعلی، به این هدف نمی‌رسید.';
+        } else {
+          const nt = Math.ceil(Math.log(target / P0) / Math.log(1 + r));
+          targetNote.textContent = nt <= MAX_TOTAL_STEPS
+            ? '🎯 در مرحله ' + toPersianDigits(String(nt)) + ' به هدف می‌رسید' + (nt > N * 12 ? ' (خارج از جدول)' : '') + '.'
+            : '🎯 بیش از ۱۰,۰۰۰ مرحله طول می‌کشد.';
+        }
+        targetNote.classList.add('visible');
+      } else {
+        targetNote.classList.remove('visible');
+      }
+
+      if(stepProfitTarget > 0 && P0 > 0 && r > 0){
+        const threshold = stepProfitTarget / (P0 * r);
+        if(threshold <= 1){
+          stepProfitNote.textContent = '🟣 همین حالا سود هر مرحله از ' + fmtFull(stepProfitTarget) + ' بیشتر است!';
+        } else {
+          const nProfit = Math.ceil(Math.log(threshold) / Math.log(1 + r));
+          if(nProfit <= MAX_TOTAL_STEPS){
+            stepProfitNote.textContent = '🟣 در مرحله ' + toPersianDigits(String(nProfit)) + '، سود هر مرحله به ' + fmtFull(stepProfitTarget) + ' می‌رسد' + (nProfit > N * 12 ? ' (خارج از جدول)' : '') + '.';
+          } else {
+            stepProfitNote.textContent = '🟣 بیش از ۱۰,۰۰۰ مرحله طول می‌کشد.';
+          }
+        }
+        stepProfitNote.classList.add('visible');
+      } else {
+        stepProfitNote.classList.remove('visible');
+      }
+    }
+
+    animateValue(resultValue, lastResultNum, displayValue, 350);
+    lastResultNum = displayValue;
+    resultLabel.textContent = labelText;
+    resultNote.textContent = noteText;
+
+    const barPct = Math.min(Math.max(growthPct, 0), 10000);
+    const barWidth = Math.min((barPct / Math.max(barPct, 100)) * 100, 100);
+    growthFill.style.width = Math.max(barWidth, 2) + '%';
+    growthLabel.textContent = (growthPct >= 0 ? '+' : '') + fmtFull(Math.round(growthPct)) + '٪';
+
+    // ─── ساخت نردبان ۳ ستونه ───
+    const rows = [];
+    for(let k = 1; k <= 12; k++){
+      const stepsK = N * k;
+      const amountK = P0 * Math.pow(1 + r, stepsK);
+      const profitK = amountK * r;
+      rows.push({k, stepsK, amountK, profitK});
+    }
+
+    let targetHitK = null;
+    if(isReverse){
+      targetHitK = 1;
+    } else if(target > 0 && P0 > 0 && P0 < target && r > 0){
+      for(const row of rows){
+        if(row.amountK >= target){ targetHitK = row.k; break; }
+      }
+    }
+
+    let profitHitK = null;
+    if(!isReverse && stepProfitTarget > 0 && P0 > 0 && r > 0){
+      for(const row of rows){
+        if(row.profitK >= stepProfitTarget){ profitHitK = row.k; break; }
+      }
+    }
+
+    ladder.innerHTML = rows.map(x => {
+      const isBase = x.k === 1;
+      const isLast = x.k === 12;
+      const isTarget = x.k === targetHitK;
+      const isProfitHit = x.k === profitHitK;
+      const lastCls = isLast ? ' lastrow' : '';
+      const thCls = isTarget ? ' target-hit' : '';
+      const phCls = isProfitHit ? ' profit-hit' : '';
+
+      // ستون ۱: ضریب  →  ×1 = 22
+      const col1 =
+        '<div class="cell cell-ratio' + lastCls + thCls + '" role="cell">' +
+          '<span class="ratio-k' + (isBase ? ' base' : '') + '">×' + toPersianDigits(String(x.k)) + '</span>' +
+          '<span class="ratio-eq">=</span>' +
+          '<span class="ratio-steps">' + toPersianDigits(String(x.stepsK)) + '</span>' +
+        '</div>';
+
+      // ستون ۲: مبلغ کل
+      const col2 =
+        '<div class="cell cell-amount' + (isBase ? ' base' : '') + lastCls + thCls + '" role="cell" title="' + fmtFull(x.amountK) + '">' +
+          fmtShort(x.amountK) +
+        '</div>';
+
+      // ستون ۳: سود هر مرحله
+      const col3 =
+        '<div class="cell cell-profit' + lastCls + thCls + phCls + '" role="cell" title="' + fmtFull(x.profitK) + '">' +
+          '+' + fmtShort(x.profitK) +
+        '</div>';
+
+      return col1 + col2 + col3;
+    }).join('');
+  }
+
+  function scheduleCompute(){
+    if(rafId) cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(() => { compute(); rafId = null; });
+  }
+
+  [targetEl, stepProfitTargetEl, principalEl, rateEl, stepsEl].forEach(el => {
+    el.addEventListener('input', () => { sanitizeAndFormat(el); scheduleCompute(); });
+  });
+
+  resetBtn.addEventListener('click', () => {
+    haptic(15);
+    targetEl.value = '1,000,000';
+    stepProfitTargetEl.value = '1,000';
+    principalEl.value = '1,000';
+    rateEl.value = '3';
+    stepsEl.value = '22';
+    scheduleCompute();
+  });
+
+  function setMode(reverse){
+    isReverse = reverse;
+    modeSegment.classList.toggle('reverse', reverse);
+    segBtns.forEach(b => {
+      const isActive = (b.dataset.mode === 'reverse') === reverse;
+      b.classList.toggle('active', isActive);
+      b.setAttribute('aria-selected', String(isActive));
+    });
+    stepsFieldWrap.classList.toggle('hidden-field', reverse);
+    lastResultNum = 0;
+    scheduleCompute();
+  }
+
+  segBtns.forEach(b => b.addEventListener('click', () => {
+    haptic(15);
+    setMode(b.dataset.mode === 'reverse');
+  }));
+
+  const themes = ['dark', 'light', 'cyber'];
+  const themeIcons = { dark: '🌙', light: '☀️', cyber: '👾' };
+  let currentTheme = localStorage.getItem('compound-theme') || 'dark';
+
+  function setTheme(theme){
+    document.documentElement.setAttribute('data-theme', theme);
+    themeToggle.textContent = themeIcons[theme];
+    localStorage.setItem('compound-theme', theme);
+    currentTheme = theme;
+  }
+  themeToggle.addEventListener('click', () => {
+    haptic(15);
+    setTheme(themes[(themes.indexOf(currentTheme) + 1) % themes.length]);
+  });
+  setTheme(currentTheme);
+
+  function togglePersian(){
+    haptic(15);
+    usePersianDigits = !usePersianDigits;
+    persianToggle.classList.toggle('active', usePersianDigits);
+    persianToggle.setAttribute('aria-checked', String(usePersianDigits));
+    localStorage.setItem('compound-persian', String(usePersianDigits));
+    scheduleCompute();
+  }
+  persianToggle.addEventListener('click', togglePersian);
+  persianToggle.addEventListener('keydown', e => {
+    if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); togglePersian(); }
+  });
+  if(localStorage.getItem('compound-persian') === 'true'){
+    usePersianDigits = true;
+    persianToggle.classList.add('active');
+    persianToggle.setAttribute('aria-checked','true');
+  }
+
+  function applyStep(input, cfg, dir, stepVal){
+    let val = getInputVal(input);
+    val = val + dir * stepVal;
+    if(cfg.min !== undefined) val = Math.max(cfg.min, val);
+    input.value = formatForInput(val, cfg.decimals);
+    haptic(8);
+    scheduleCompute();
+  }
+
+  let stepTimer = null, stepInterval = null, isRepeated = false;
+
+  panel.addEventListener('pointerdown', e => {
+    const btn = e.target.closest('.stepbtn[data-target]');
+    if(!btn) return;
+    e.preventDefault();
+    isRepeated = false;
+    const targetId = btn.dataset.target;
+    const dir = parseInt(btn.dataset.dir, 10);
+    const input = document.getElementById(targetId);
+    const cfg = fieldConfig[targetId];
+    const stepVal = btn.dataset.step ? parseFloat(btn.dataset.step) : cfg.step;
+    stepTimer = setTimeout(() => {
+      isRepeated = true;
+      stepInterval = setInterval(() => applyStep(input, cfg, dir, stepVal), 90);
+    }, 400);
+  });
+
+  function clearStepTimers(){
+    if(stepTimer) clearTimeout(stepTimer);
+    if(stepInterval) clearInterval(stepInterval);
+    stepTimer = null; stepInterval = null;
+  }
+  window.addEventListener('pointerup', clearStepTimers);
+  window.addEventListener('pointercancel', clearStepTimers);
+
+  panel.addEventListener('click', e => {
+    const btn = e.target.closest('.stepbtn[data-target]');
+    if(!btn || isRepeated) return;
+    const targetId = btn.dataset.target;
+    const dir = parseInt(btn.dataset.dir, 10);
+    const input = document.getElementById(targetId);
+    const cfg = fieldConfig[targetId];
+    const stepVal = btn.dataset.step ? parseFloat(btn.dataset.step) : cfg.step;
+    applyStep(input, cfg, dir, stepVal);
+  });
+
+  scheduleCompute();
+})();
+</script>
+</body>
+</html>
